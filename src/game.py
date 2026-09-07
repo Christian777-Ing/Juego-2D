@@ -33,12 +33,14 @@ class Game:
 
         self.font = pygame.font.Font(None, 50)
         self.small_font = pygame.font.Font(None, 30)
+        self.player_name = ""
 
         self.crear_juego()
 
 
     def crear_juego(self):
 
+        self.pl
         self.player = Player(self.WIDTH // 2, self.HEIGHT // 2) #Posición inicial del jugador en el centro de la pantalla
         self.score_saved= False  # Variable para controlar si la puntuación ya se ha guardado
 
@@ -59,24 +61,41 @@ class Game:
 
     def manejar_eventos(self, event):
 
-            if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN:
 
-                if event.key == pygame.K_r and not self.game_over:
-                    self.weapon.recargar() 
+            # Pausar / continuar
+            if event.key == pygame.K_p and not self.game_over:
+                self.pausa = not self.pausa
 
-                if self.game_over:
-                    if event.key == pygame.K_r:
-                        self.crear_juego()  # Reiniciar el juego al presionar 'R' cuando el juego ha terminado
-                    elif event.key == pygame.K_ESCAPE:
-                        self.running = False  # Salir del juego al presionar 'ESC' cuando el juego ha terminado
+            if event.key == pygame.K_r and not self.game_over:
+                self.weapon.recargar()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1 and not self.weapon.is_reloading():  # Botón izquierdo del ratón
-                    if self.weapon.disparar():  # Intentar disparar
-                        mouse_x, mouse_y = pygame.mouse.get_pos()
-                        bullet = Bullet(self.player.rect.centerx, self.player.rect.centery, mouse_x, mouse_y)
-                        bullet.damage = self.weapon.damage  # Asignar el daño de la bala según el arma
-                        self.bullets.append(bullet)  # Agregar la bala a la lista de balas
+            if self.game_over:
+
+                if event.key == pygame.K_r:
+                    self.crear_juego()
+
+                elif event.key == pygame.K_ESCAPE:
+                    self.running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+
+            if event.button == 1 and not self.weapon.is_reloading():
+
+                if self.weapon.disparar():
+
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+                    bullet = Bullet(
+                        self.player.rect.centerx,
+                        self.player.rect.centery,
+                        mouse_x,
+                        mouse_y
+                    )
+
+                    bullet.damage = self.weapon.damage
+
+                    self.bullets.append(bullet)
 
 
     def actualizar(self):
@@ -172,6 +191,44 @@ class Game:
             self.spawn_enemigo()
             self.last_enemy_spawn_time = current_time
 
+    def dibujar_pausa(self):
+
+        # Fondo oscuro transparente
+        overlay = pygame.Surface((self.WIDTH, self.HEIGHT))
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+
+        self.screen.blit(overlay, (0, 0))
+
+        # Texto PAUSA
+        pausa_text = self.font.render(
+            "PAUSA",
+            True,
+            (255, 255, 255)
+        )
+
+        pausa_rect = pausa_text.get_rect(
+            center=(self.WIDTH // 2, 220)
+        )
+
+        self.screen.blit(pausa_text, pausa_rect)
+
+        # Instrucción
+        texto = self.small_font.render(
+            "Presiona P para continuar",
+            True,
+            (180, 180, 180)
+        )
+
+        texto_rect = texto.get_rect(
+            center=(self.WIDTH // 2, 300)
+        )
+
+        self.screen.blit(texto, texto_rect)
+
+
+
+        
     def mostrar_ranking(self):
         ranking= self.database.get_Raking()
         print("Ranking de puntuaciones:")
@@ -272,7 +329,7 @@ class Game:
                 else:
                     self.manejar_eventos(event)
 
-            if not self.in_menu:
+            if not self.in_menu and not self.pausa:
                 self.actualizar()
 
             # DIBUJAR
@@ -283,6 +340,9 @@ class Game:
 
                 else:
                     self.menu.dibujar()
+
+                    if self.pausa:
+                        self.dibujar_pausa()
 
             else:
                 self.dibujar()
