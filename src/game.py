@@ -35,19 +35,33 @@ class Game:
         for enemy in self.enemies:
             if self.player.rect.colliderect(enemy.rect):
                 self.player.health -= enemy.damage  # Reducir la salud del jugador al colisionar con un enemigo
-                print(f"Jugador colisionó con un enemigo! Salud actual: {self.player.health}")
-
+                if self.player.health < 0:
+                    self.player.health = 0  # Evitar que la salud sea negativa
                 # Mover al enemigo hacia atrás al colisionar con el jugador
                 if enemy.rect.x < self.player.rect.x:
                     enemy.rect.x -= 20
                 else:
                     enemy.rect.x += 20
 
+    def barra_de_vida(self):
+        # Dibujar la barra de vida del jugador
+        health_bar_width = 200
+        health_bar_height = 20
+
+        x=20
+        y=20
+
+        pygame.draw.rect(self.screen, (80, 80, 80), (x, y, health_bar_width, health_bar_height))
+        health_width = (self.player.health / 100) * health_bar_width
+        pygame.draw.rect(self.screen, (50, 200, 50), (x, y, health_width, health_bar_height))
+ 
+
     def dibujar(self):
         self.screen.fill((20, 20, 20))  # Fill the screen with a dark gray color
         self.player.dibujar(self.screen)
         for enemy in self.enemies:
             enemy.dibujar(self.screen)
+        self.barra_de_vida()
         pygame.display.flip()
 
     def ejecutar(self):

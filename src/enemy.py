@@ -11,6 +11,11 @@ class Enemy:
         self.health = 50
         self.damage = 10
 
+        #Tiempo entre ataques
+        self.attack_cooldown = 1000  # Tiempo en milisegundos
+        self.last_attack_time = 0  # Tiempo del último ataque
+
+
 
         self.rect = pg.Rect(x, y, self.width, self.height)
 
@@ -27,6 +32,13 @@ class Enemy:
             # Mover al enemigo hacia el jugador
             self.rect.x += dx * self.speed
             self.rect.y += dy * self.speed
+
+    def atacar(self, jugador):
+        current_time = pg.time.get_ticks()
+        if current_time - self.last_attack_time >= self.attack_cooldown:
+            self.last_attack_time = current_time
+            return True  # El enemigo puede atacar
+        return False  # El enemigo no puede atacar aún
 
     def actualizar(self, jugador):
         self.mover_hacia_jugador(jugador)
