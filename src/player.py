@@ -9,7 +9,8 @@ class Player:
         self.y=y
 
         self.speed = 5
-        self.health = 100
+        self.max_health = 100
+        self.health = self.max_health
 
         self.rect = pg.Rect(self.x, self.y, self.width, self.height)
 
