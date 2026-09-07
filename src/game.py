@@ -58,6 +58,7 @@ class Game:
 
         self.game_over = False  # Reiniciar el estado de game_over al crear un nuevo juego
         self.pausa= False
+        self.partida_guardada = False
 
     def cargar_partida(self):
 
@@ -109,6 +110,7 @@ class Game:
         self.game_over = False
         self.pausa = False
         self.last_enemy_spawn_time = pygame.time.get_ticks()
+        self.partida_guardada = True 
         return True
 
     def guardar_partida(self):
@@ -141,6 +143,12 @@ class Game:
                 self.guardar_partida()
                 self.mostrar_guardado = True
                 self.tiempo_guardado = pygame.time.get_ticks()
+                self.partida_guardada = True
+
+            if event.key == pygame.K_m and self.pausa and self.partida_guardada:
+                self.in_menu = True
+                self.pausa = False
+                self.mostrar_guardado = False
 
             if event.key == pygame.K_r and not self.game_over:
                 self.weapon.recargar()
@@ -322,7 +330,7 @@ class Game:
             # Mostrar durante 2 segundos
             if pygame.time.get_ticks() - self.tiempo_guardado < 2000:
                 guardado = self.small_font.render(
-                    "✓ PARTIDA GUARDADA",
+                    "PARTIDA GUARDADA",
                     True,
                     (50, 255, 100)
                 )
@@ -334,6 +342,23 @@ class Game:
 
             else:
                 self.mostrar_guardado = False
+
+        
+        if self.partida_guardada:
+            volver = self.small_font.render(
+                "M = Volver al menú principal",
+                True,
+                (100, 200, 255)
+            )
+        else:
+            volver = self.small_font.render(
+                "Guarda con G para poder salir al menú",
+                True,
+                (150, 150, 150)
+            )
+
+        volver_rect = volver.get_rect(center=(self.WIDTH // 2, 450))
+        self.screen.blit(volver, volver_rect)
 
 
 
@@ -436,6 +461,9 @@ class Game:
                         ranking = self.database.get_Raking()
                         self.menu.abrir_Ranking(ranking)
 
+                    elif opcion_seleccionada == "Ajustes":
+                        self.menu.abrir_Ajustes()
+
                     elif opcion_seleccionada == "Salir":
                         self.running = False
 
@@ -450,6 +478,8 @@ class Game:
             if self.in_menu:
                 if self.menu.mostrar_Ranking:
                     self.menu.dibujar_Ranking()
+                elif self.menu.mostrar_Ajustes:
+                    self.menu.dibujar_Ajustes()
                 else:
                     self.menu.dibujar()
 
