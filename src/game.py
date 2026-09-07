@@ -245,28 +245,45 @@ class Game:
 
     def ejecutar(self):
         while self.running:
+
             for event in pygame.event.get():
+
                 if event.type == pygame.QUIT:
                     self.running = False
+
                 if self.in_menu:
+
                     opcion_seleccionada = self.menu.manejar_eventos(event)
+
                     if opcion_seleccionada == "Jugar":
                         self.crear_juego()
                         self.in_menu = False
+
                     elif opcion_seleccionada == "Ranking":
-                        self.mostrar_ranking()
+                        ranking = self.database.get_Raking()
+                        self.menu.abrir_Ranking(ranking)
+
                     elif opcion_seleccionada == "Salir":
                         self.running = False
+
                 else:
                     self.manejar_eventos(event)
+
             if not self.in_menu:
                 self.actualizar()
+
+            # DIBUJAR
             if self.in_menu:
-                self.menu.dibujar()
+
+                if self.menu.mostrar_Ranking:
+                    self.menu.dibujar_Ranking()
+                else:
+                    self.menu.dibujar()
+
             else:
                 self.dibujar()
 
             pygame.display.flip()
-            self.clock.tick(60)  # Limit the frame rate to 60 FPS
+            self.clock.tick(60)
 
         pygame.quit()
