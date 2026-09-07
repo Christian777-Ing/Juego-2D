@@ -1,0 +1,22 @@
+{
+            "Zombie":{ 
+                "health": 50, 
+                "damage": 10, 
+                "speed": 2, 
+                "xp": 10, 
+                "score": 100},
+
+            "Skeleton":{ 
+                "health": 30,
+                "damage": 8, 
+                "speed": 4, 
+                "xp": 15, 
+                "score": 150},
+                
+            "Golem":{ 
+                "health": 120, 
+                "damage": 20 , 
+                "speed": 1, 
+                "xp": 30, 
+                "score": 300}
+        }

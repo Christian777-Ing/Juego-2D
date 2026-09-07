@@ -18,14 +18,15 @@ class Player:
     def movimiento(self):
         keys = pg.key.get_pressed()
 
-        if keys[pg.K_LEFT]:
-            self.rect.x -= self.speed
-        if keys[pg.K_RIGHT]:
-            self.rect.x += self.speed
-        if keys[pg.K_UP]:
+        if keys[pg.K_w]:
             self.rect.y -= self.speed
-        if keys[pg.K_DOWN]:
+        if keys[pg.K_s]:
             self.rect.y += self.speed
+        if keys[pg.K_a]:
+            self.rect.x -= self.speed
+        if keys[pg.K_d]:
+            self.rect.x += self.speed
+
 
     def actualizar(self, screen):
         self.movimiento()

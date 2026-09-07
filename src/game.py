@@ -5,6 +5,10 @@ from src.player import Player
 from src.enemy import Enemy
 from src.bullet import Bullet
 from src.weapon import Weapon
+from src.database import Database
+from src.menu import Menu
+
+
 
 
 class Game:
@@ -19,7 +23,11 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
+        self.menu= Menu(self.screen)
+        self.in_menu= True
+
         self.game_over = False
+        self.database = Database() 
 
         self.font = pygame.font.Font(None, 50)
         self.small_font = pygame.font.Font(None, 30)
@@ -29,7 +37,10 @@ class Game:
 
     def crear_juego(self):
 
-        self.player = Player(self.WIDTH // 2, self.HEIGHT // 2)  # posicion inicial del jugador en el centro de la pantalla
+        self.player_name="Christian"
+        self.player = Player(self.WIDTH // 2, self.HEIGHT // 2) #Posición inicial del jugador en el centro de la pantalla
+        self.score_saved= False  # Variable para controlar si la puntuación ya se ha guardado
+
         self.enemies= [Enemy(100, 100), Enemy(700, 100), Enemy(100, 500)]  # Lista de enemigos con posiciones iniciales
         self.bullets = []  # Lista para almacenar las balas disparadas
         self.weapon = Weapon(self.player)  # Crear un objeto Weapon para el jugador
@@ -43,10 +54,7 @@ class Game:
 
         self.game_over = False  # Reiniciar el estado de game_over al crear un nuevo juego
 
-    def manejar_eventos(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
+    def manejar_eventos(self, event):
 
             if event.type == pygame.KEYDOWN:
 
@@ -87,7 +95,10 @@ class Game:
         self.detectar_colisiones()
 
         if self.player.health <= 0:
-            self.game_over = True 
+            self.game_over = True
+            if not self.score_saved:  # Guardar la puntuación solo una vez
+                self.database.save_scores(self.player_name, self.score, self.level)
+                self.score_saved = True 
 
     def detectar_colisiones(self):
         for enemy in self.enemies:
@@ -158,6 +169,13 @@ class Game:
             self.spawn_enemigo()
             self.last_enemy_spawn_time = current_time
 
+    def mostrar_ranking(self):
+        ranking= self.database.get_Raking()
+        print("Ranking de puntuaciones:")
+        for posiciones, player in enumerate(ranking, start=1):
+            print(f"{posiciones}. {player[0]} - Puntuación: {player[1]} - Nivel: {player[2]}")
+        
+
     def barra_de_vida(self):
         # Dibujar la barra de vida del jugador
         health_bar_width = 200
@@ -227,9 +245,28 @@ class Game:
 
     def ejecutar(self):
         while self.running:
-            self.manejar_eventos()
-            self.actualizar()
-            self.dibujar()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                if self.in_menu:
+                    opcion_seleccionada = self.menu.manejar_eventos(event)
+                    if opcion_seleccionada == "Jugar":
+                        self.crear_juego()
+                        self.in_menu = False
+                    elif opcion_seleccionada == "Ranking":
+                        self.mostrar_ranking()
+                    elif opcion_seleccionada == "Salir":
+                        self.running = False
+                else:
+                    self.manejar_eventos(event)
+            if not self.in_menu:
+                self.actualizar()
+            if self.in_menu:
+                self.menu.dibujar()
+            else:
+                self.dibujar()
+
+            pygame.display.flip()
             self.clock.tick(60)  # Limit the frame rate to 60 FPS
 
         pygame.quit()

@@ -1,14 +1,13 @@
 import pygame as pg
 import math
+import json
 
 class Enemy:
     def __init__(self, x, y, enemy_type="Zombie"):
 
-        enemy_types={
-            "Zombie":{ "health": 50, "damage": 10, "speed": 2, "xp": 10, "score": 100},
-            "Skeleton":{ "health": 30, "damage": 8, "speed": 4, "xp": 15, "score": 150},
-            "Golem":{ "health": 120, "damage": 20 , "speed": 1, "xp": 30, "score": 300},
-        }
+        with open("data/enemies.json") as file:
+            enemy_types = json.load(file)
+
 
         data=enemy_types[enemy_type]# Selecciona el tipo de enemigo que deseas crear
         self.type=enemy_type
