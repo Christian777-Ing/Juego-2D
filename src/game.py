@@ -29,6 +29,8 @@ class Game:
         self.game_over = False
         self.database = Database() 
 
+        self.pausa=False
+
         self.font = pygame.font.Font(None, 50)
         self.small_font = pygame.font.Font(None, 30)
 
@@ -37,7 +39,6 @@ class Game:
 
     def crear_juego(self):
 
-        self.player_name="Christian"
         self.player = Player(self.WIDTH // 2, self.HEIGHT // 2) #Posición inicial del jugador en el centro de la pantalla
         self.score_saved= False  # Variable para controlar si la puntuación ya se ha guardado
 
@@ -53,6 +54,8 @@ class Game:
         self.last_enemy_spawn_time = pygame.time.get_ticks()  # Tiempo del último spawn de enemigo
 
         self.game_over = False  # Reiniciar el estado de game_over al crear un nuevo juego
+        self.pausa= False
+
 
     def manejar_eventos(self, event):
 
@@ -277,6 +280,7 @@ class Game:
 
                 if self.menu.mostrar_Ranking:
                     self.menu.dibujar_Ranking()
+
                 else:
                     self.menu.dibujar()
 

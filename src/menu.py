@@ -16,22 +16,96 @@ class Menu:
         self.mostrar_Ranking= False
         self.ranking=[]
 
+        self.enterirng_jugador=False
+        self.nombre_jugador=""
+
     def dibujar(self):
+
+        if self.mostrar_Ranking:
+            self.dibujar_Ranking()
+
+        elif self.enterirng_jugador:
+            self.dibujar_nombre_pantalla()
+
+        else:
+            self.screen.fill((20, 20, 20))
+
+            titulo = self.font_titulo.render(
+                "SURVIVOR 2D",
+                True,
+                (255, 255, 255)
+            )
+
+            titulo_rect = titulo.get_rect(
+                center=(self.width // 2, 120)
+            )
+
+            self.screen.blit(titulo, titulo_rect)
+
+            for index, opcion in enumerate(self.opciones):
+
+                if index == self.seleccion:
+                    color = (255, 220, 50)
+                else:
+                    color = (255, 255, 255)
+
+                texto = self.font_boton.render(
+                    opcion,
+                    True,
+                    color
+                )
+
+                texto_rect = texto.get_rect(
+                    center=(self.width // 2, 250 + index * 70)
+                )
+
+                self.screen.blit(texto, texto_rect)
+
+    def dibujar_nombre_pantalla(self):
+
         self.screen.fill((20, 20, 20))
 
-        titulo= self.font_titulo.render("SURVIVOR 2D", True, (255, 255, 255))
+        # Título
+        titulo = self.font_titulo.render(
+            "INGRESA TU NOMBRE",
+            True,
+            (255, 255, 255)
+        )
 
-        titulo_rect = titulo.get_rect(center=(self.width // 2, 120))
+        titulo_rect = titulo.get_rect(
+            center=(self.width // 2, 150)
+        )
+
         self.screen.blit(titulo, titulo_rect)
 
-        for index, opcion in enumerate(self.opciones):
-            if index == self.seleccion:
-                color = (255, 220, 50) 
-            else:
-                color = (255, 255, 255)
-            texto= self.font_boton.render(opcion, True, color)
-            texto_rect = texto.get_rect(center=(self.width // 2, 250 + index * 70))
-            self.screen.blit(texto, texto_rect)
+        # Nombre ingresado
+        nombre_texto = self.font_titulo.render(
+            self.nombre_jugador + "_",
+            True,
+            (255, 220, 50)
+        )
+
+        nombre_rect = nombre_texto.get_rect(
+            center=(self.width // 2, 280)
+        )
+
+        self.screen.blit(nombre_texto, nombre_rect)
+
+        # Instrucción
+        instruccion = self.font_ranking.render(
+            "ENTER = comenzar",
+            True,
+            (180, 180, 180)
+        )
+
+        instruccion_rect = instruccion.get_rect(
+            center=(self.width // 2, 400)
+        )
+
+        self.screen.blit(instruccion, instruccion_rect)
+
+        
+        
 
     def dibujar_Ranking(self):
 
@@ -101,20 +175,47 @@ class Menu:
 
 
     def manejar_eventos(self, event):
+
         if self.mostrar_Ranking:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.mostrar_Ranking=False
+                    self.mostrar_Ranking = False
             return None
-        
+
+        if self.enterirng_jugador:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if self.nombre_jugador.strip() != "":
+                        self.enterirng_jugador = False
+                        return "Jugar"
+                elif event.key == pygame.K_BACKSPACE:
+                    self.nombre_jugador = self.nombre_jugador[:-1]
+
+                else:
+                    if len(self.nombre_jugador) < 15:
+                        self.nombre_jugador += event.unicode
+
+            return None
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                self.seleccion = (self.seleccion - 1) % len(self.opciones)
+                self.seleccion = (
+                    self.seleccion - 1
+                ) % len(self.opciones)
             elif event.key == pygame.K_DOWN:
-                self.seleccion = (self.seleccion + 1) % len(self.opciones)
+                self.seleccion = (
+                    self.seleccion + 1
+                ) % len(self.opciones)
             elif event.key == pygame.K_RETURN:
-                return self.opciones[self.seleccion]
+                if self.opciones[self.seleccion] == "Jugar":
+                    self.nombre_jugador = ""
+                    self.enterirng_jugador = True
+                    return None
+                elif self.opciones[self.seleccion] == "Ranking":
+                    return "Ranking"
+                elif self.opciones[self.seleccion] == "Salir":
 
+                    return "Salir"
         return None
 
     def abrir_Ranking(self, ranking):
