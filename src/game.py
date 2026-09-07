@@ -2,6 +2,7 @@ import pygame
 
 from src.player import Player
 from src.enemy import Enemy
+from src.bullet import Bullet
 
 class Game:
     def __init__(self):
@@ -27,6 +28,7 @@ class Game:
 
         self.player = Player(self.WIDTH // 2, self.HEIGHT // 2)  # posicion inicial del jugador en el centro de la pantalla
         self.enemies= [Enemy(100, 100), Enemy(700, 100), Enemy(100, 500)]  # Lista de enemigos con posiciones iniciales
+        self.bullets = []  # Lista para almacenar las balas disparadas
 
         self.game_over = False  # Reiniciar el estado de game_over al crear un nuevo juego
 
@@ -41,6 +43,12 @@ class Game:
                 elif event.key == pygame.K_ESCAPE:
                     self.running = False  # Salir del juego al presionar 'ESC'
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Botón izquierdo del ratón
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    bullet = Bullet(self.player.rect.centerx, self.player.rect.centery, mouse_x, mouse_y)
+                    self.bullets.append(bullet)  # Agregar la bala a la lista de balas
+
     def actualizar(self):
 
         if self.game_over:
@@ -50,6 +58,9 @@ class Game:
 
         for enemy in self.enemies:
             enemy.actualizar(self.player)  # Actualizar la posición del enemigo hacia el jugador
+
+        for bullet in self.bullets:
+            bullet.actualizar()  # Actualizar la posición de la bala
 
         self.detectar_colisiones()
 
@@ -69,6 +80,16 @@ class Game:
 
                 if self.player.health < 0:
                     self.player.health = 0  # Evitar que la salud sea negativa
+
+        for bullet in self.bullets[:]:  # Iterar sobre una copia de la lista de balas
+            for enemy in self.enemies:
+                if bullet.rect.colliderect(enemy.rect):
+                    enemy.health -= bullet.damage  # Reducir la salud del enemigo al colisionar con una bala
+                    if enemy.health <= 0:
+                        self.enemies.remove(enemy)  # Eliminar el enemigo si su salud llega a cero
+                    if bullet in self.bullets:
+                        self.bullets.remove(bullet)  # Eliminar la bala después de la colisión
+                    break  # Salir del bucle de enemigos después de una colisión
 
     def barra_de_vida(self):
         # Dibujar la barra de vida del jugador
@@ -107,6 +128,9 @@ class Game:
         self.player.dibujar(self.screen)
         for enemy in self.enemies:
             enemy.dibujar(self.screen)
+        for bullet in self.bullets:
+            bullet.dibujar(self.screen)
+
         self.barra_de_vida()
 
         if self.game_over:
