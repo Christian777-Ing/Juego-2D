@@ -15,15 +15,37 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
+        self.game_over = False
+
+        self.font = pygame.font.Font(None, 50)
+        self.small_font = pygame.font.Font(None, 30)
+
+        self.crear_juego()
+
+
+    def crear_juego(self):
+
         self.player = Player(self.WIDTH // 2, self.HEIGHT // 2)  # posicion inicial del jugador en el centro de la pantalla
         self.enemies= [Enemy(100, 100), Enemy(700, 100), Enemy(100, 500)]  # Lista de enemigos con posiciones iniciales
+
+        self.game_over = False  # Reiniciar el estado de game_over al crear un nuevo juego
 
     def manejar_eventos(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    self.crear_juego()  # Reiniciar el juego al presionar 'R' cuando el juego ha terminado
+                elif event.key == pygame.K_ESCAPE:
+                    self.running = False  # Salir del juego al presionar 'ESC'
+
     def actualizar(self):
+
+        if self.game_over:
+            return  # No actualizar el juego si ha terminado
+        
         self.player.actualizar(self.screen)
 
         for enemy in self.enemies:
@@ -31,17 +53,22 @@ class Game:
 
         self.detectar_colisiones()
 
+        if self.player.health <= 0:
+            self.game_over = True 
+
     def detectar_colisiones(self):
         for enemy in self.enemies:
             if self.player.rect.colliderect(enemy.rect):
-                self.player.health -= enemy.damage  # Reducir la salud del jugador al colisionar con un enemigo
-                if self.player.health < 0:
-                    self.player.health = 0  # Evitar que la salud sea negativa
-                # Mover al enemigo hacia atrás al colisionar con el jugador
+                if enemy.atacar(self.player):
+                    self.player.health -= enemy.damage  # Reducir la salud del jugador al colisionar con un enemigo
+
                 if enemy.rect.x < self.player.rect.x:
                     enemy.rect.x -= 20
                 else:
                     enemy.rect.x += 20
+
+                if self.player.health < 0:
+                    self.player.health = 0  # Evitar que la salud sea negativa
 
     def barra_de_vida(self):
         # Dibujar la barra de vida del jugador
@@ -54,7 +81,26 @@ class Game:
         pygame.draw.rect(self.screen, (80, 80, 80), (x, y, health_bar_width, health_bar_height))
         health_width = (self.player.health / 100) * health_bar_width
         pygame.draw.rect(self.screen, (50, 200, 50), (x, y, health_width, health_bar_height))
- 
+
+    def dibujar_game_over(self):
+
+        overlay = pygame.Surface((self.WIDTH, self.HEIGHT))
+        overlay.set_alpha(100)  # Transparencia del overlay
+        overlay.fill((0, 0, 0))
+
+        self.screen.blit(overlay, (0, 0))
+
+        title_text = self.font.render("Game Over", True, (255, 255, 255))
+        title_rect = title_text.get_rect(center=(self.WIDTH // 2, 220))
+        self.screen.blit(title_text, title_rect)
+
+        texto_reiniciar = self.small_font.render("Presiona 'R' para reiniciar", True, (255, 255, 255))
+        reiniciar_rect = texto_reiniciar.get_rect(center=(self.WIDTH // 2, 300))
+        self.screen.blit(texto_reiniciar, reiniciar_rect)
+
+        salida_texto = self.small_font.render("Presiona 'ESC' para salir", True, (255, 255, 255))
+        salida_rect = salida_texto.get_rect(center=(self.WIDTH // 2, 350))
+        self.screen.blit(salida_texto, salida_rect)
 
     def dibujar(self):
         self.screen.fill((20, 20, 20))  # Fill the screen with a dark gray color
@@ -62,6 +108,10 @@ class Game:
         for enemy in self.enemies:
             enemy.dibujar(self.screen)
         self.barra_de_vida()
+
+        if self.game_over:
+            self.dibujar_game_over()
+
         pygame.display.flip()
 
     def ejecutar(self):
