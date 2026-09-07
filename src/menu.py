@@ -10,7 +10,7 @@ class Menu:
         self.font_boton = pygame.font.Font(None, 50)
         self.font_ranking= pygame.font.Font(None, 35)
 
-        self.opciones = ["Jugar","Ranking", "Salir"]
+        self.opciones = ["Jugar","Continuar","Ranking", "Salir"]
 
         self.seleccion = 0  # Opción seleccionada actualmente
         self.mostrar_Ranking= False
@@ -211,10 +211,13 @@ class Menu:
                     self.nombre_jugador = ""
                     self.enterirng_jugador = True
                     return None
+                elif self.opciones[self.seleccion] == "Continuar":
+                    return "Continuar"
+
                 elif self.opciones[self.seleccion] == "Ranking":
                     return "Ranking"
-                elif self.opciones[self.seleccion] == "Salir":
 
+                elif self.opciones[self.seleccion] == "Salir":
                     return "Salir"
         return None
 

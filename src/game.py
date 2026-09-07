@@ -30,6 +30,8 @@ class Game:
         self.database = Database() 
 
         self.pausa=False
+        self.mostrar_guardado = False
+        self.tiempo_guardado = 0
 
         self.font = pygame.font.Font(None, 50)
         self.small_font = pygame.font.Font(None, 30)
@@ -40,7 +42,6 @@ class Game:
 
     def crear_juego(self):
 
-        self.pl
         self.player = Player(self.WIDTH // 2, self.HEIGHT // 2) #Posición inicial del jugador en el centro de la pantalla
         self.score_saved= False  # Variable para controlar si la puntuación ya se ha guardado
 
@@ -58,6 +59,75 @@ class Game:
         self.game_over = False  # Reiniciar el estado de game_over al crear un nuevo juego
         self.pausa= False
 
+    def cargar_partida(self):
+
+        partida = self.database.load_game()
+
+        if partida is None:
+            return False
+
+        (
+            self.player_name,
+            player_x,
+            player_y,
+            health,
+            self.score,
+            self.experiencia,
+            self.level,
+            self.experiencia_para_siguiente_nivel,
+            weapon_damage,
+            ammo
+        ) = partida
+
+        # CARGAR JUGADOR
+        self.player = Player(player_x, player_y)
+
+        self.player.health = health
+
+        # CARGAR ARMA
+        self.weapon = Weapon(self.player)
+        self.weapon.damage = weapon_damage
+        self.weapon.ammo = ammo
+
+        # CARGAR ENEMIGOS
+        self.enemies = []
+        enemigos_guardados = self.database.load_enemies()
+        for enemy_data in enemigos_guardados:
+            enemy_type, x, y, health = enemy_data
+            enemy = Enemy(
+                x,
+                y,
+                enemy_type
+            )
+            enemy.health = health
+            self.enemies.append(enemy)
+
+        # BALAS
+        self.bullets = []
+
+        self.score_saved = False
+        self.game_over = False
+        self.pausa = False
+        self.last_enemy_spawn_time = pygame.time.get_ticks()
+        return True
+
+    def guardar_partida(self):
+
+        self.database.save_game(
+            self.player_name,
+            self.player.rect.x,
+            self.player.rect.y,
+            self.player.health,
+            self.score,
+            self.experiencia,
+            self.level,
+            self.experiencia_para_siguiente_nivel,
+            self.weapon.damage,
+            self.weapon.ammo,
+            self.enemies
+        )
+
+
 
     def manejar_eventos(self, event):
 
@@ -66,6 +136,11 @@ class Game:
             # Pausar / continuar
             if event.key == pygame.K_p and not self.game_over:
                 self.pausa = not self.pausa
+
+            if event.key == pygame.K_g and self.pausa and not self.game_over:
+                self.guardar_partida()
+                self.mostrar_guardado = True
+                self.tiempo_guardado = pygame.time.get_ticks()
 
             if event.key == pygame.K_r and not self.game_over:
                 self.weapon.recargar()
@@ -118,9 +193,14 @@ class Game:
 
         if self.player.health <= 0:
             self.game_over = True
-            if not self.score_saved:  # Guardar la puntuación solo una vez
-                self.database.save_scores(self.player_name, self.score, self.level)
-                self.score_saved = True 
+            if not self.score_saved:
+                self.database.save_scores(
+                    self.player_name,
+                    self.score,
+                    self.level
+                )
+                self.database.delete_saved_game()
+                self.score_saved = True
 
     def detectar_colisiones(self):
         for enemy in self.enemies:
@@ -200,31 +280,60 @@ class Game:
 
         self.screen.blit(overlay, (0, 0))
 
-        # Texto PAUSA
+        # TÍTULO PAUSA
         pausa_text = self.font.render(
             "PAUSA",
             True,
             (255, 255, 255)
         )
-
         pausa_rect = pausa_text.get_rect(
-            center=(self.WIDTH // 2, 220)
+            center=(self.WIDTH // 2, 180)
         )
 
         self.screen.blit(pausa_text, pausa_rect)
 
-        # Instrucción
-        texto = self.small_font.render(
-            "Presiona P para continuar",
+        # OPCIONES
+        continuar = self.small_font.render(
+            "P = Continuar",
             True,
-            (180, 180, 180)
+            (255, 255, 255)
+        )
+        continuar_rect = continuar.get_rect(
+            center=(self.WIDTH // 2, 270)
         )
 
-        texto_rect = texto.get_rect(
-            center=(self.WIDTH // 2, 300)
+        self.screen.blit(continuar, continuar_rect)
+
+        guardar = self.small_font.render(
+            "G = Guardar partida",
+            True,
+            (255, 220, 50)
         )
 
-        self.screen.blit(texto, texto_rect)
+        guardar_rect = guardar.get_rect(
+            center=(self.WIDTH // 2, 320)
+        )
+
+        self.screen.blit(guardar, guardar_rect)
+
+
+        # MENSAJE PARTIDA GUARDADA
+        if self.mostrar_guardado:
+            # Mostrar durante 2 segundos
+            if pygame.time.get_ticks() - self.tiempo_guardado < 2000:
+                guardado = self.small_font.render(
+                    "✓ PARTIDA GUARDADA",
+                    True,
+                    (50, 255, 100)
+                )
+                guardado_rect = guardado.get_rect(
+                    center=(self.WIDTH // 2, 390)
+                )
+
+                self.screen.blit(guardado, guardado_rect)
+
+            else:
+                self.mostrar_guardado = False
 
 
 
@@ -301,23 +410,27 @@ class Game:
         if self.game_over:
             self.dibujar_game_over()
 
-        pygame.display.flip()
 
     def ejecutar(self):
+
         while self.running:
-
+            # EVENTOS
             for event in pygame.event.get():
-
                 if event.type == pygame.QUIT:
                     self.running = False
-
                 if self.in_menu:
-
                     opcion_seleccionada = self.menu.manejar_eventos(event)
-
                     if opcion_seleccionada == "Jugar":
+                        self.player_name = self.menu.nombre_jugador
+                        self.database.delete_saved_game()
                         self.crear_juego()
                         self.in_menu = False
+
+                    elif opcion_seleccionada == "Continuar":
+                        if self.cargar_partida():
+                            self.in_menu = False
+                        else:
+                            print("No existe una partida guardada")
 
                     elif opcion_seleccionada == "Ranking":
                         ranking = self.database.get_Raking()
@@ -329,25 +442,22 @@ class Game:
                 else:
                     self.manejar_eventos(event)
 
+            # ACTUALIZAR JUEGO
             if not self.in_menu and not self.pausa:
                 self.actualizar()
 
             # DIBUJAR
             if self.in_menu:
-
                 if self.menu.mostrar_Ranking:
                     self.menu.dibujar_Ranking()
-
                 else:
                     self.menu.dibujar()
 
-                    if self.pausa:
-                        self.dibujar_pausa()
-
             else:
                 self.dibujar()
+                if self.pausa:
+                    self.dibujar_pausa()
 
             pygame.display.flip()
             self.clock.tick(60)
-
         pygame.quit()
